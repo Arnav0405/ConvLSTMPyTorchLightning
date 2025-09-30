@@ -1,0 +1,25 @@
+[project]
+name = "geture-research-ml"
+version = "0.1.0"
+description = "Directory for instantiating and training PyTorch ConvLSTM Models. "
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "lightning>=2.5.5",
+    "torch>=2.8.0",
+    "torchinfo>=1.8.0",
+    "torchvision>=0.23.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu129"
+url = "https://download.pytorch.org/whl/cu129"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu129", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+torchvision = [
+  { index = "pytorch-cu129", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
