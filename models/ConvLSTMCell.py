@@ -14,7 +14,12 @@ class ConvLSTMCell(nn.Module):
         self.conv = nn.Conv2d(self.input_dim + self.hidden_dim, out_channels= 4 * self.hidden_dim,
                                   kernel_size=self.kernel_size, padding=self.padding, bias=self.bias)
         
-
+    def init_hidden(self, batch_size, image_size):
+        height, width = image_size
+        h = torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device)
+        c = torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device)
+        return (h, c)
+    
     def forward(self, input_tensor, cur_state):
         h_curr, c_curr = cur_state
 
@@ -30,9 +35,3 @@ class ConvLSTMCell(nn.Module):
         c_next = f * c_curr + i * g
         h_next = o * torch.tanh(c_next)
         return h_next, c_next
-    
-    def init_hidden(self, batch_size, image_size):
-        height, width = image_size
-        h = torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device)
-        c = torch.zeros(batch_size, self.hidden_dim, height, width, device=self.conv.weight.device)
-        return (h, c)
