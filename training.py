@@ -46,6 +46,26 @@ class GestureRecognitionModel(pl.LightningModule):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         return optimizer
     
+class GestureDataModule(pl.LightningDataModule):
+    def __init__(self, data_dir, batch_size=8, num_workers=4):
+        super(GestureDataModule, self).__init__()
+        self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+
+    def setup(self, stage=None):
+        transform = torchvision.transforms.Compose([
+            torchvision.transforms.Resize((64, 64)),
+            torchvision.transforms.ToTensor(),
+        ])
+        self.train_dataset = torchvision.datasets.ImageFolder(os.path.join(self.data_dir, 'train'), transform=transform)
+        self.val_dataset = torchvision.datasets.ImageFolder(os.path.join(self.data_dir, 'val'), transform=transform)
+
+    def train_dataloader(self):
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
 
 def run_training():
     data_dir = 'path_to_your_data'  # Update this path
@@ -53,9 +73,9 @@ def run_training():
     num_classes = 8
     num_epochs = 200
 
-    # data_module = GestureDataModule(data_dir=data_dir, batch_size=batch_size)
+    data_module = GestureDataModule(data_dir=data_dir, batch_size=batch_size)
     model = GestureRecognitionModel(num_classes=num_classes)
 
     trainer = Trainer(max_epochs=num_epochs, gpus=1 if torch.cuda.is_available() else 0)
-    trainer.fit(model)
+    trainer.fit(model, datamodule=data_module)
 
