@@ -13,7 +13,6 @@ class EncoderDecoderCLSTM(nn.Module):
 
         self.decoder_1_convlstm = ConvLSTMCell(input_dim=nf, hidden_dim=nf, kernel_size=(3, 3), bias=True)
         self.decoder_2_convlstm = ConvLSTMCell(input_dim=nf, hidden_dim=nf, kernel_size=(3, 3), bias=True)
-        self.decoder_1_2DCNN = nn.Conv2d(in_channels=nf, out_channels=nf, kernel_size=(1, 3, 3), padding=(0, 1, 1))
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1))  # Global average pooling
         self.classifier = nn.Sequential(
             nn.Linear(nf, nf // 2),
