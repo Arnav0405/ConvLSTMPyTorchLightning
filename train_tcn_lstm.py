@@ -60,7 +60,7 @@ class GestureDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize((128, 128)),
+            torchvision.transforms.Resize((64, 64)),
             torchvision.transforms.ToTensor(),
         ])
         self.train_dataset = torchvision.datasets.ImageFolder(os.path.join(self.data_dir, 'train'), transform=transform)
