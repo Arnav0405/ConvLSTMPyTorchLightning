@@ -28,12 +28,17 @@ class GestureDataModule(pl.LightningDataModule):
                 generator=torch.Generator().manual_seed(42)
             )
 
+    def video_collate_fn(self, batch):
+        videos, labels, infos = zip(*batch)
+        videos = torch.stack(videos)
+        labels = torch.tensor(labels)
+        return videos, labels, infos
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=self.video_collate_fn)
 
-    def val_dataloader(self):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers)
+    def val_dataloader(self, persistent_workers=True):
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=self.video_collate_fn, persistent_workers=persistent_workers)
 
 def main(num_epochs):
     data_mod = GestureDataModule(data_dir='./colors', batch_size=4) 
