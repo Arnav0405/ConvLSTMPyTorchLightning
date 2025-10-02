@@ -4,6 +4,7 @@ import torchvision
 from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
 from models.TCN_With_LSTM import TCN_LSTM
 
@@ -80,8 +81,30 @@ def run_training():
     data_module = GestureDataModule(data_dir=data_dir, batch_size=batch_size)
     model = TCNLSTMClassifier(num_classes=num_classes)
 
-    trainer = Trainer(max_epochs=num_epochs, gpus=1 if torch.cuda.is_available() else 0)
+    checkpoint_callback = ModelCheckpoint(
+        monitor='val_loss',
+        dirpath='checkpoints',
+        filename='tcnlstm-{epoch:02d}-{val_loss:.2f}',
+        save_top_k=3,
+        mode='min'
+    )
+
+    early_stop_callback = EarlyStopping(
+        monitor='val_loss',
+        patience=10,
+        verbose=True,
+        mode='min'
+    )
+
+    trainer = Trainer(
+        max_epochs=num_epochs, 
+        gpus=1 if torch.cuda.is_available() else 0, 
+        callbacks=[checkpoint_callback, early_stop_callback]
+        )
+    
     trainer.fit(model, datamodule=data_module)
+    
+    torch.save(model.state_dict(), "tcnlstm_final.pth")
 
 if __name__ == "__main__":
     run_training()
