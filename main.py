@@ -1,15 +1,16 @@
 import torchvision
 import torch
+torch.set_float32_matmul_precision('medium')
 from torch.utils.data import DataLoader, random_split
 import pytorch_lightning as pl
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
-from .ColorVideoDataset import ColorVideoDataset
-from .training import ConvLSTM_GestureRecognitionModel
+from ColorVideoDataset import ColorVideoDataset
+from training import ConvLSTM_GestureRecognitionModel
 
 class GestureDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size=8, num_workers=4):
+    def __init__(self, data_dir, batch_size=8, num_workers=15):
         super().__init__()
         self.data_dir = data_dir
         self.batch_size = batch_size
@@ -17,8 +18,8 @@ class GestureDataModule(pl.LightningDataModule):
 
     def setup(self, stage: str=None):
         transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize((64, 64)),
             torchvision.transforms.ToTensor(),
+            torchvision.transforms.Resize((64, 64))
         ])
         full_dataset = ColorVideoDataset(root_dir=self.data_dir, transform=transform)
         self.train_dataset, self.val_dataset = random_split(
@@ -54,7 +55,7 @@ def main(num_epochs):
         mode='min'
     )
 
-    trainer = Trainer(max_epochs=num_epochs, gpus=1 if torch.cuda.is_available() else 0,
+    trainer = Trainer(max_epochs=num_epochs, accelerator='cuda',
                       callbacks=[checkpoint_callback, early_stop_callback])
     trainer.fit(model, datamodule=data_mod)
 
