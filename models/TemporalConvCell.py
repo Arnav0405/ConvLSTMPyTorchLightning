@@ -1,5 +1,5 @@
 import torch.nn as nn
-import torch
+
 
 class Chomp1d(nn.Module):
     """
@@ -24,9 +24,6 @@ class TemporalConvCell(nn.Module):
             padding=kernel_size//2
         )
 
-        self.temporal_padding = (temporal_kernel - 1) * dilation
-        self.chomp = Chomp1d(self.temporal_padding)
-
         self.temporal_conv = nn.Conv1d(
             out_channels,
             out_channels,
@@ -34,36 +31,39 @@ class TemporalConvCell(nn.Module):
             padding=temporal_kernel//2
         )
         
-        
+        self.temporal_padding = (temporal_kernel - 1) * dilation
+        self.chomp = Chomp1d(self.temporal_padding)
 
         self.bn_spatial = nn.BatchNorm2d(out_channels)
         self.bn_temporal = nn.BatchNorm1d(out_channels)
         self.relu = nn.LeakyReLU()
-        
+        self.drop = nn.Dropout()
+
     def forward(self, x):
         b, c, t, h, w = x.shape
         
-        x_reshaped = x.view(b * t, c, h, w)
+        x_reshaped = x.reshape(b * t, c, h, w)
         x_spatial = self.spatial_conv(x_reshaped)
         x_spatial = self.bn_spatial(x_spatial)
         x_spatial = self.relu(x_spatial)
         
         _, c_out, h_out, w_out = x_spatial.shape
-        x_spatial = x_spatial.view(b, t, c_out, h_out, w_out)
+        x_spatial = x_spatial.reshape(b, t, c_out, h_out, w_out)
         x_spatial = x_spatial.permute(0, 2, 1, 3, 4)  # (b, c, t, h, w)
         
-        x_temp = x_spatial.view(b, c_out, t, h_out * w_out)
+        x_temp = x_spatial.reshape(b, c_out, t, h_out * w_out)
         x_temp = x_temp.permute(0, 3, 1, 2)  # (b, h*w, c, t)
-        x_temp = x_temp.reshape(b * h_out * w_out, c_out, t)
+        x_temp = x_temp.reshape(b * h_out * w_out, c_out, t)    # (b*h*w, c, t)
         x_temp = self.temporal_conv(x_temp)
         x_temp = self.chomp(x_temp)
+
+        t_out = x_temp.size(2)
+
         x_temp = self.bn_temporal(x_temp)
         x_temp = self.relu(x_temp)
-        x_temp = nn.Dropout(p=0.2)(x_temp)
-        
-        # Reshape back
-        x_temp = x_temp.view(b, h_out * w_out, c_out, t)
+        x_temp = self.drop(x_temp)
+        x_temp = x_temp.reshape(b, h_out * w_out, c_out, t_out)
         x_temp = x_temp.permute(0, 2, 3, 1)  # (b, c, t, h*w)
-        x_temp = x_temp.view(b, c_out, t, h_out, w_out)
+        x_temp = x_temp.reshape(b, c_out, t_out, h_out, w_out)
         
         return x_temp
