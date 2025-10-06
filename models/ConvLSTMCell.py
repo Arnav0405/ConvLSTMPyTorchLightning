@@ -22,15 +22,8 @@ class ConvLSTMCell(nn.Module):
     
     def forward(self, input_tensor, cur_state):
         h_curr, c_curr = cur_state
-
-        # Add debug prints
-        print(f"input_tensor shape: {input_tensor.shape}")
-        print(f"h_curr shape: {h_curr.shape}")
-        print(f"Expected input_dim: {self.input_dim}, hidden_dim: {self.hidden_dim}")
         
         combined = torch.cat([input_tensor, h_curr], dim=1)
-        print(f"combined shape: {combined.shape}")
-        print(f"conv expects: {self.input_dim + self.hidden_dim} channels")
         
         combined_conv = self.conv(combined)
 
