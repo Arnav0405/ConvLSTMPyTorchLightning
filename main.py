@@ -35,13 +35,13 @@ class GestureDataModule(pl.LightningDataModule):
         return videos, labels, infos
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=self.video_collate_fn)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=self.video_collate_fn, persistent_workers=False, pin_memory=False)
 
-    def val_dataloader(self, persistent_workers=True):
-        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=self.video_collate_fn, persistent_workers=persistent_workers)
+    def val_dataloader(self):
+        return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=self.video_collate_fn, persistent_workers=False, pin_memory=False)
 
 def main(num_epochs):
-    data_mod = GestureDataModule(data_dir='./colors', batch_size=4) 
+    data_mod = GestureDataModule(data_dir='./colors', batch_size=2) 
     data_mod.setup()
     model = ConvLSTM_GestureRecognitionModel(num_classes=8)
 
@@ -61,7 +61,8 @@ def main(num_epochs):
     )
 
     trainer = Trainer(max_epochs=num_epochs, accelerator='cuda',
-                      callbacks=[checkpoint_callback, early_stop_callback])
+                      callbacks=[checkpoint_callback, early_stop_callback],
+                      precision=16)
     trainer.fit(model, datamodule=data_mod)
 
     torch.save(model.state_dict(), "ConvLstm_final.pth")

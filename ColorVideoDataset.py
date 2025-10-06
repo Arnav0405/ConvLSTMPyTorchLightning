@@ -74,9 +74,11 @@ class ColorVideoDataset(Dataset):
                 frame = torch.from_numpy(frame).permute(2, 0, 1).float() / 255.0
             
             frames.append(frame)
+            del frame
         
         # Convert to tensor
         video_frames = torch.stack(frames)  # Shape: (T, C, H, W)
+        del frames
         
         # Handle sequence length
         if self.sequence_length is not None:
@@ -86,9 +88,10 @@ class ColorVideoDataset(Dataset):
             else:
                 # Pad with last frame if sequence is shorter
                 padding_needed = self.sequence_length - len(video_frames)
-                last_frame = video_frames[-1].unsqueeze(0)
+                last_frame = video_frames[-1:]
                 padding = last_frame.repeat(padding_needed, 1, 1, 1)
                 video_frames = torch.cat([video_frames, padding], dim=0)
+                del padding, last_frame
         
         # Create metadata
         video_info = {
