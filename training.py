@@ -22,8 +22,21 @@ class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
-        x, y = batch
-        x = x.permute(0, 1, 4, 2, 3)  # Rearrange to (B, T, C, H, W)
+        x, y, _ = batch
+        # Debug: Print original shape
+        print(f"Original x shape: {x.shape}")
+        
+        # Fix the permutation - if your dataset outputs (B, T, H, W, C), then:
+        if x.shape[-1] == 3:  # If channels are last
+            x = x.permute(0, 1, 4, 2, 3)  # (B, T, H, W, C) -> (B, T, C, H, W)
+        elif x.shape[2] == 3:  # If channels are already in position 2
+            # No permutation needed, already (B, T, C, H, W)
+            pass
+        else:
+            # Your specific case - if it's (B, C, T, H, W), convert to (B, T, C, H, W)
+            x = x.permute(0, 2, 1, 3, 4)
+        
+        print(f"After permutation x shape: {x.shape}")
         y_hat = self(x)
         loss = self.criterion(y_hat, y)
         self.log('train_loss', loss)
@@ -35,8 +48,14 @@ class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         x, y, _ = batch
-        x = x.permute(0, 1, 4, 2, 3)  # Rearrange to (B, T, C, H, W)
-
+        # Apply the same fix here
+        if x.shape[-1] == 3:
+            x = x.permute(0, 1, 4, 2, 3)
+        elif x.shape[2] == 3:
+            pass
+        else:
+            x = x.permute(0, 2, 1, 3, 4)
+        
         y_hat = self(x)
         loss = self.criterion(y_hat, y)
         self.log('val_loss', loss, on_epoch=True, prog_bar=True)
