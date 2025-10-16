@@ -11,22 +11,26 @@ from models.EncoderDecoderCLSTM import EncoderDecoderCLSTM
 
 
 class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
-    def __init__(self, num_classes=8, nf=64, in_chan=3, learning_rate=1e-3):
+    def __init__(self, num_classes=8, nf=64, in_chan=3, learning_rate=1.905e-05):
         super(ConvLSTM_GestureRecognitionModel, self).__init__()
         self.model = EncoderDecoderCLSTM(nf=nf, in_chan=in_chan)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.learning_rate = learning_rate
         self.num_classes = num_classes
 
+    def on_train_epoch_start(self):
+        opt = self.optimizers()
+        if opt is not None:
+            lr = opt.param_groups[0]['lr']
+            self.log("learning_rate", lr, prog_bar=True, logger=True)
+
+
     def forward(self, x):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
         x, y, _ = batch
-        # Debug: Print original shape
-        print(f"Original x shape: {x.shape}")
         
-        # Fix the permutation - if your dataset outputs (B, T, H, W, C), then:
         if x.shape[-1] == 3:  # If channels are last
             x = x.permute(0, 1, 4, 2, 3)  # (B, T, H, W, C) -> (B, T, C, H, W)
         elif x.shape[2] == 3:  # If channels are already in position 2
@@ -36,19 +40,14 @@ class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
             # Your specific case - if it's (B, C, T, H, W), convert to (B, T, C, H, W)
             x = x.permute(0, 2, 1, 3, 4)
         
-        print(f"After permutation x shape: {x.shape}")
         y_hat = self(x)
         loss = self.criterion(y_hat, y)
-        self.log('train_loss', loss)
-
-        lr_saved = self.trainer.optimizers[0].param_groups[-1]['lr']
-        lr_saved = torch.scalar_tensor(lr_saved).cuda()
+        self.log('train_loss', loss, on_epoch=True, prog_bar=True)
         
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y, _ = batch
-        # Apply the same fix here
         if x.shape[-1] == 3:
             x = x.permute(0, 1, 4, 2, 3)
         elif x.shape[2] == 3:
@@ -68,8 +67,10 @@ class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
         return {'val_loss': loss, 'val_acc': acc}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        return optimizer
+        optimizer = torch.optim.RMSprop(self.parameters(), lr=self.learning_rate)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.9)
+        return {"optimizer": optimizer, "lr_scheduler": scheduler}
+
     
 def run_training():
     data_dir = 'path_to_your_data'  # Update this path
