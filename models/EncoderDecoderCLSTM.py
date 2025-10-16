@@ -13,13 +13,12 @@ class EncoderDecoderCLSTM(nn.Module):
 
         self.decoder_1_convlstm = ConvLSTMCell(input_dim=nf, hidden_dim=nf, kernel_size=(3, 3), bias=True)
         self.decoder_2_convlstm = ConvLSTMCell(input_dim=nf, hidden_dim=nf, kernel_size=(3, 3), bias=True)
-        self.global_pool = nn.AdaptiveAvgPool2d((1, 1))  # Global average pooling
+        self.global_pool = nn.AdaptiveAvgPool2d((16,16))  # Global average pooling
         self.classifier = nn.Sequential(
-            nn.Linear(nf, nf // 2),
-            nn.ReLU(),
+            nn.Linear(nf * 16 * 16, nf // 2),
+            nn.LeakyReLU(),
             nn.Dropout(0.5),
-            nn.Linear(nf // 2, num_classes),
-            nn.Softmax()
+            nn.Linear(nf // 2, num_classes)
         )
 
     def autoEncoder(self, x, seq_len, h_t, c_t, h_t2, c_t2, h_t3, c_t3, h_t4, c_t4):
@@ -34,11 +33,13 @@ class EncoderDecoderCLSTM(nn.Module):
         for i in range(seq_len // 10):   # Run decoder for half the input sequence length
             h_t3, c_t3 = self.decoder_1_convlstm(input_tensor=encoder_vector, cur_state=[h_t3, c_t3])  
             h_t4, c_t4 = self.decoder_2_convlstm(input_tensor=h_t3, cur_state=[h_t4, c_t4])  
-            dencoder_vector = h_t4
+            decoder_vector = h_t4
         
-        output = self.global_pool(dencoder_vector)
+        # print(decoder_vector.shape)
+        output = self.global_pool(decoder_vector)
+        # print(output.shape)
         classifier_output = output.view(output.size(0), -1)  # Flatten
-
+        # print(classifier_output.shape)
         classifier_outputs = self.classifier(classifier_output)
 
         return classifier_outputs
@@ -55,3 +56,14 @@ class EncoderDecoderCLSTM(nn.Module):
         outputs = self.autoEncoder(x, seq_length, h_t, c_t, h_t2, c_t2, h_t3, c_t3, h_t4, c_t4)
 
         return outputs
+    
+
+if __name__ == "__main__":
+    model = EncoderDecoderCLSTM(nf=64, in_chan=3, num_classes=10)
+    dummy_input = torch.randn(2, 30, 3, 64, 64)
+
+    try:
+        output = model(dummy_input)
+        print("Output shape:", output.shape)  
+    except Exception as e:
+        print("Error occurred while testing the model:", e)
