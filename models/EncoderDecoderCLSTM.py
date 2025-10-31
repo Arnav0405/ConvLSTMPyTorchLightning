@@ -4,7 +4,7 @@ import torch
 from models.ConvLSTMCell import ConvLSTMCell
 
 class EncoderDecoderCLSTM(nn.Module):
-    def __init__(self, nf, in_chan, num_classes=10, *args, **kwargs):
+    def __init__(self, nf, in_chan, num_classes=8, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
 
