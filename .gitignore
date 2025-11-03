@@ -6,5 +6,7 @@ dist/
 wheels/
 *.egg-info
 colors/
+checkpoints/
 # Virtual environments
 .venv
+*.zip
