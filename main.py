@@ -7,11 +7,11 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.tuner.tuning import Tuner
 from pytorch_lightning.callbacks import ModelCheckpoint, EarlyStopping
 
-from datasetModule import TrainGestureDataModule
-from training import ConvLSTM_GestureRecognitionModel
+from datasetModule import GestureDataModule
+from training import ConvLSTM_GestureRecognitionModel, CustomProgressBar
 
 def main(num_epochs):
-    data_mod = TrainGestureDataModule(data_dir='./colors', batch_size=16) 
+    data_mod = GestureDataModule(data_dir='./colors', batch_size=16) 
     data_mod.setup()
     model = ConvLSTM_GestureRecognitionModel(num_classes=8, learning_rate=1.9e-5)
 
@@ -30,8 +30,11 @@ def main(num_epochs):
         mode='min'
     )
 
+    progress_bar = CustomProgressBar()
+
     trainer = Trainer(max_epochs=num_epochs, accelerator='cuda',
-                      callbacks=[checkpoint_callback, early_stop_callback],
+                      callbacks=[checkpoint_callback, early_stop_callback, progress_bar], 
+                      enable_progress_bar=True,
                       precision=16, limit_val_batches=0.3, num_sanity_val_steps=0)
     trainer.fit(model, datamodule=data_mod)
     
@@ -42,5 +45,5 @@ def main(num_epochs):
     torch.save(model.state_dict(), "ConvLstm_final.pth")
     
 if __name__ == "__main__":
-    EPOCHS = 200
+    EPOCHS = 150
     main(EPOCHS)
