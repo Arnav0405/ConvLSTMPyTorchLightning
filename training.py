@@ -9,7 +9,7 @@ from models.EncoderDecoderCLSTM import EncoderDecoderCLSTM
 class ConvLSTM_GestureRecognitionModel(pl.LightningModule):
     def __init__(self, num_classes=8, nf=64, in_chan=3, learning_rate=1.905e-05):
         super().__init__()
-        self.model = EncoderDecoderCLSTM(nf=nf, in_chan=in_chan)
+        self.model = EncoderDecoderCLSTM(nf=nf, in_chan=in_chan, num_classes=num_classes)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.learning_rate = learning_rate
         self.num_classes = num_classes
