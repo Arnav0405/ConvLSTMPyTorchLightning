@@ -26,25 +26,17 @@ class GestureDataModule(pl.LightningDataModule):
             torchvision.transforms.Normalize(mean=[0.5], std=[0.5])
         ])
         full_dataset = ColorVideoDataset(root_dir=self.data_dir, transform=transform)
-        self.train_dataset, val_set = random_split(
+        self.train_dataset, self.val_dataset = random_split(
                 full_dataset,
                 [int(0.8 * len(full_dataset)), len(full_dataset) - int(0.8 * len(full_dataset))], 
                 generator=torch.Generator().manual_seed(42)
             )
-        
-        self.val_dataset, self.test_dataset = random_split(
-             val_set, 
-             [int(0.5) * len(val_set), len(val_set) - int(0.5 * len(val_set))]
-        )
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=video_collate_fn, persistent_workers=True, pin_memory=False)
 
     def val_dataloader(self):
         return DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=video_collate_fn, persistent_workers=True, pin_memory=False)
-    
-    def test_dataloader(self):
-         return DataLoader(self.test_dataset, batch_size= self.batch_size, shuffle=False, collate_fn=video_collate_fn, persistent_workers=True)
     
     def get_class_names(self):
         temp_dataset = ColorVideoDataset(root_dir=self.data_dir)
