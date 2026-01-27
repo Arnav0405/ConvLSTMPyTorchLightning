@@ -11,7 +11,7 @@ from datasetModule import GestureDataModule
 from training import ConvLSTM_GestureRecognitionModel, CustomProgressBar
 
 def main(num_epochs):
-    data_mod = GestureDataModule(data_dir='./colors', batch_size=16) 
+    data_mod = GestureDataModule(data_dir='./colors', batch_size=8) 
     data_mod.setup()
     model = ConvLSTM_GestureRecognitionModel(num_classes=8, learning_rate=1.9e-5)
 
@@ -35,14 +35,14 @@ def main(num_epochs):
     trainer = Trainer(max_epochs=num_epochs, accelerator='cuda',
                       callbacks=[checkpoint_callback, early_stop_callback, progress_bar], 
                       enable_progress_bar=True,
-                      precision=16, limit_val_batches=0.3, num_sanity_val_steps=0)
+                      precision=16, num_sanity_val_steps=0)
     trainer.fit(model, datamodule=data_mod)
     
     # tuner = Tuner(trainer)
     # lr_finder = tuner.lr_find(model, datamodule=data_mod)
     # print(lr_finder.suggestion())       # 1.9054607179632464e-05
 
-    torch.save(model.state_dict(), "ConvLstm_final.pth")
+    torch.save(model.state_dict(), "ConvLstm_final_1.pth")
     
 if __name__ == "__main__":
     EPOCHS = 150
