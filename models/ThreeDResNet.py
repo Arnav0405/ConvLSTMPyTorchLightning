@@ -16,14 +16,13 @@ from pytorchvideo.transforms import (
     UniformTemporalSubsample
 )
 
-def get_3dResNet():
-    
+def get_3dResNet() -> nn.Module:    
     model = torch.hub.load('facebookresearch/pytorchvideo', 'slow_r50', pretrained=True)
     for param in model.parameters():
-    	param.requires_grad = False
+        param.requires_grad = False
     
     num_classes = 8
-    in_features = model.blocks[5].proj.in_features  # Get input features (2048)
+    in_features = model.blocks[5].proj.in_features
     model.blocks[5].proj = nn.Linear(in_features, num_classes)
     
     # Unfreeze the new linear layer for training
@@ -32,7 +31,7 @@ def get_3dResNet():
     print(model)
     return model
 
-def get_resnet_Transformer():
+def get_resnet_transformer() -> Compose:
     side_size = 256
     mean = [0.45, 0.45, 0.45]
     std = [0.225, 0.225, 0.225]
@@ -62,7 +61,7 @@ def get_resnet_Transformer():
     return transform
 
 
-def load_videos_from_direct(file_path, transform, subset_ratio=0.1):
+def load_videos_from_direct(file_path, transform: Compose, subset_ratio=0.1):
     dataset = ColorVideoDataset(file_path)
     num_samples = int(len(dataset) * subset_ratio)
     
@@ -89,7 +88,7 @@ def load_videos_from_direct(file_path, transform, subset_ratio=0.1):
 
 if __name__ == "__main__":
     model = get_3dResNet()
-    transform = get_resnet_Transformer()
+    transform = get_resnet_transformer()
     video_tensor = load_videos_from_direct('./colors', transform, subset_ratio=0.1)
     model = model.to('cuda' if torch.cuda.is_available() else 'cpu')
     video_tensor = video_tensor.to('cuda' if torch.cuda.is_available() else 'cpu')
