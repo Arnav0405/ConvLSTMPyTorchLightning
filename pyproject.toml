@@ -10,6 +10,7 @@ dependencies = [
     "matplotlib>=3.10.6",
     "opencv-python>=4.12.0.88",
     "pandas>=2.3.3",
+    "pytorchvideo>=0.1.5",
     "scikit-learn>=1.7.2",
     "seaborn>=0.13.2",
     "torch>=2.8.0",

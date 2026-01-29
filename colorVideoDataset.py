@@ -103,6 +103,6 @@ class ColorVideoDataset(Dataset):
 if __name__ == "__main__":
     data = ColorVideoDataset('./colors')
     for x, y, _ in data:
-        print(y)
+        print(x.shape, y)
         
         
