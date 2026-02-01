@@ -59,7 +59,7 @@ class TinyVideoNetTransfer(tf.keras.Model):
         
         # 5. Resize to 224x224 (Model Requirement) and Normalize
         x = self.resize(x)
-        x = tf.cast(x, tf.float32) / 255.0
+        x = tf.cast(x, tf.float32) 
         
         # 6. Extract Features via Backbone
         features = self.backbone(x)

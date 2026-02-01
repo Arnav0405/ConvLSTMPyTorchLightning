@@ -11,3 +11,5 @@ checkpoints/
 .venv
 *.pth 
 /data/
+
+models/trained_models/
