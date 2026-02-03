@@ -4,21 +4,13 @@ import cv2
 import torch
 
 class ColorVideoDataset(Dataset):
-    """
-    PyTorch Dataset for color video classification.
-    Each video is a sequence of frames, labeled by the color folder it belongs to.
-    """
-    
-    def __init__(self, root_dir, transform=None, sequence_length=30):
-        """
-        Args:
-            root_dir (string): Directory with all the color folders.
-            transform (callable, optional): Optional transform to be applied on frames.
-            sequence_length (int, optional): Fixed length for video sequences. If None, uses all frames.
-        """
+    def __init__(self, root_dir, transform=None, sequence_length=30, return_tensors= True):
+        torch.cuda.empty_cache()
+
         self.root_dir = root_dir
         self.transform = transform
         self.sequence_length = sequence_length
+        self.return_tensors = return_tensors
         
         # Get all color categories
         self.color_folders = [f for f in os.listdir(root_dir) if f.startswith('colors_')]
@@ -48,7 +40,7 @@ class ColorVideoDataset(Dataset):
     def __getitem__(self, idx):
         """
         Returns:
-            video_frames: Tensor of shape (T, C, H, W) where T is sequence length
+            video_frames: List of numpy arrays (H, W, C) or Tensor (T, C, H, W)
             label: Integer label for the color category
             video_info: Dictionary with metadata
         """
@@ -66,32 +58,32 @@ class ColorVideoDataset(Dataset):
             frame = cv2.imread(frame_path)
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert BGR to RGB
             
-            # Apply transforms if provided
-            if self.transform:
-                frame = self.transform(frame)
-            else:
-                # Convert to tensor and normalize to [0, 1]
-                frame = torch.from_numpy(frame).permute(2, 0, 1).float() / 255.0
-            
+            if self.return_tensors:
+                # Apply transforms if provided
+                if self.transform:
+                    frame = self.transform(frame)
+                else:
+                    # Convert to tensor and normalize to [0, 1]
+                    frame = torch.from_numpy(frame).permute(2, 0, 1).float() / 255.0
+                
             frames.append(frame)
             del frame
         
-        # Convert to tensor
-        video_frames = torch.stack(frames)  # Shape: (T, C, H, W)
-        del frames
-        
         # Handle sequence length
         if self.sequence_length is not None:
-            if len(video_frames) >= self.sequence_length:
-                # Randomly sample frames or take first N frames
-                video_frames = video_frames[:self.sequence_length]
+            if len(frames) >= self.sequence_length:
+                # Take first N frames
+                frames = frames[:self.sequence_length]
             else:
                 # Pad with last frame if sequence is shorter
-                padding_needed = self.sequence_length - len(video_frames)
-                last_frame = video_frames[-1:]
-                padding = last_frame.repeat(padding_needed, 1, 1, 1)
-                video_frames = torch.cat([video_frames, padding], dim=0)
-                del padding, last_frame
+                padding_needed = self.sequence_length - len(frames)
+                frames.extend([frames[-1]] * padding_needed)
+        
+        # Stack into tensor if needed
+        if self.return_tensors:
+            video_frames = torch.stack(frames)  # Shape: (T, C, H, W)
+        else:
+            video_frames = frames  # List of numpy arrays (H, W, C)
         
         # Create metadata
         video_info = {
@@ -102,6 +94,7 @@ class ColorVideoDataset(Dataset):
         }
         
         return video_frames, label, video_info
+
     
     def get_class_names(self):
         """Returns list of color class names"""
@@ -110,3 +103,10 @@ class ColorVideoDataset(Dataset):
     def get_num_classes(self):
         """Returns number of color classes"""
         return len(self.color_to_idx)
+    
+if __name__ == "__main__":
+    data = ColorVideoDataset('./colors')
+    for x, y, _ in data:
+        print(x.shape, y)
+        
+        
