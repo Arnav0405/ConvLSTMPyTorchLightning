@@ -14,7 +14,7 @@ class TinyVideoNetTransfer(tf.keras.Model):
         super().__init__()
         # Backbone: TinyVideoNet
         # Assumed to take input [Batch*Frames, H, W, C] and output features
-        self.backbone = hub.KerasLayer(model_handle, trainable=True)
+        self.backbone = hub.KerasLayer(model_handle, trainable=False)
         
         # Preprocessing layers
         self.resize = tf.keras.layers.Resizing(224, 224)
