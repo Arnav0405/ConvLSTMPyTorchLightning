@@ -93,7 +93,7 @@ class ColorVideoDataset(Dataset):
             'video_folder': os.path.basename(video_path)
         }
         
-        return video_frames, label, video_info
+        return video_frames, label
 
     
     def get_class_names(self):
