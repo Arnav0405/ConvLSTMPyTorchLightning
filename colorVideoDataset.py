@@ -5,8 +5,6 @@ import torch
 
 class ColorVideoDataset(Dataset):
     def __init__(self, root_dir, transform=None, sequence_length=30, return_tensors= True):
-        torch.cuda.empty_cache()
-
         self.root_dir = root_dir
         self.transform = transform
         self.sequence_length = sequence_length
@@ -93,7 +91,7 @@ class ColorVideoDataset(Dataset):
             'video_folder': os.path.basename(video_path)
         }
         
-        return video_frames, label
+        return video_frames, label, video_info
 
     
     def get_class_names(self):
