@@ -10,6 +10,6 @@ checkpoints/
 # Virtual environments
 .venv
 *.pth 
-/data/
+data/*.pt
 
 models/trained_models/

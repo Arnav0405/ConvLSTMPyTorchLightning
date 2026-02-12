@@ -8,8 +8,8 @@ class VideoMAEClassifier(nn.Module):
     def __init__(self, num_classes=8):
         super(VideoMAEClassifier, self).__init__()
         self.model = VideoMAEModel.from_pretrained("MCG-NJU/videomae-base")
-        for param in self.model.parameters():
-            param.requires_grad = False
+        # for param in self.model.parameters():
+        #     param.requires_grad = True  # Unfreeze all layers for fine-tuning
         # Classifier head
         self.fc_norm = nn.LayerNorm(self.model.config.hidden_size)
         self.classifier = nn.Linear(self.model.config.hidden_size, num_classes)
@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     # Load VideoMAE processor and model
     processor = VideoMAEImageProcessor.from_pretrained("MCG-NJU/videomae-base")
+
     model = VideoMAEClassifier(num_classes=8)
     # print(summary(model, input_size=(1, 16, 3, 224, 224)))
     # Process the video frames
